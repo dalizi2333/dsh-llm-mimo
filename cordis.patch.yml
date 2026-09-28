@@ -1,0 +1,5 @@
+# llm-mimo 自带 bundle patch:自挂载适配器条目(设置→插件的开关控制整个 bundle)。
+# 模型目录等配置的 GUI 保存由设置控制器写入 profile patch 的顶层 llm-mimo 行。
+- insert:
+    - id: llm-mimo
+      name: '@local/llm-mimo'

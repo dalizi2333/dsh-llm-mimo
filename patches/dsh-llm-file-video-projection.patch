@@ -1,0 +1,64 @@
+--- /tmp/dsh-llm-index.orig.js	2026-09-28 01:15:00.563378125 +0800
++++ "/mnt/Data/Program Files (x86)/MiMo CodeX/HDSL/data/runtimes/0.1.7-rc.2/node_modules/@deepseek-ai/dsh-llm/lib/index.js"	2026-09-28 11:26:53.202327800 +0800
+@@ -618,10 +618,10 @@
+ 	return `[${identity}: verbatim read-only copy saved at ${quoted(readonlyPath)}. Read that path with your file tools when its contents are needed; copy it to a writable location before modifying it. When delegating file work, include this saved path in the delegation prompt; only subagents sharing this execution environment can read it.]`;
+ }
+ /** Replace every file occurrence with handle text. */
+-function replaceFilesWithHandles(blocks, resolvePath) {
++function replaceFilesWithHandles(blocks, resolvePath, skip) {
+ 	let next;
+ 	for (const [index, block] of blocks.entries()) {
+-		if (block.type === "file") {
++		if (block.type === "file" && !(skip !== void 0 && skip(block.attachment))) {
+ 			next ??= blocks.slice(0, index);
+ 			next.push({
+ 				type: "text",
+@@ -633,10 +633,22 @@
+ 	}
+ 	return next ?? blocks;
+ }
+-function projectFilesToText(messages, resolvePath) {
++const VIDEO_FILE_PATTERN = /\.(?:mp4|webm|mov|mkv|m4v)$/iu;
++function isVideoFileRef(ref) {
++	return typeof ref?.name === "string" && VIDEO_FILE_PATTERN.test(ref.name);
++}
++const AUDIO_FILE_PATTERN = /\.(?:wav|mp3|m4a|aac|ogg|flac)$/iu;
++function isAudioFileRef(ref) {
++	return typeof ref?.name === "string" && AUDIO_FILE_PATTERN.test(ref.name);
++}
++const PDF_FILE_PATTERN = /\.pdf$/iu;
++function isPdfFileRef(ref) {
++	return typeof ref?.name === "string" && PDF_FILE_PATTERN.test(ref.name);
++}
++function projectFilesToText(messages, resolvePath, skip) {
+ 	if (!messages.some((message) => contentHasFile(message.content))) return messages;
+ 	return messages.map((message) => {
+-		const content = replaceFilesWithHandles(message.content, resolvePath);
++		const content = replaceFilesWithHandles(message.content, resolvePath, skip);
+ 		return content === message.content ? message : {
+ 			...message,
+ 			content
+@@ -2307,7 +2319,22 @@
+ 					...resolvedConfig
+ 				};
+ 				let projectedMessages = resolvedOptions.messages;
+-				if (projectedMessages.some((message) => contentHasFile(message.content))) projectedMessages = projectFilesToText(projectedMessages, (ref) => this.fileReadPath(ref));
++				// File blocks stay handle-text by default; a model whose catalog declares
++				// video/audio/pdf input keeps those file blocks structural so adapters can
++				// inline the bytes (mirror of the image capability gate below). Owner call
++				// 2026-09-28: never assume text extraction for PDF — when the user needs
++				// layout/scans, projection is silent degradation; capability honesty lives
++				// in each catalog's checkboxes. Wire probes: Bailian consumes video_url and
++				// PDF file blocks; MiMo chat/responses consume input_audio+video_url and
++				// explicitly reject PDF; MiMo anthropic face silently drops all three.
++				{
++					const modalities = modelInfo.inputModalities;
++					const keep = [];
++					if (Array.isArray(modalities) && modalities.includes("video")) keep.push(isVideoFileRef);
++					if (Array.isArray(modalities) && modalities.includes("audio")) keep.push(isAudioFileRef);
++					if (Array.isArray(modalities) && modalities.includes("pdf")) keep.push(isPdfFileRef);
++					if (projectedMessages.some((message) => contentHasFile(message.content))) projectedMessages = projectFilesToText(projectedMessages, (ref) => this.fileReadPath(ref), keep.length > 0 ? (ref) => keep.some((match) => match(ref)) : void 0);
++				}
+ 				if (modelInfo.inputModalities !== void 0 && !modelInfo.inputModalities.includes("image") && projectedMessages.some((message) => contentHasImage(message.content))) projectedMessages = projectImagesForTextModel(projectedMessages);
+ 				const projectedTools = projectToolUpdates(projectedMessages, resolvedOptions.tools, modelInfo.toolUpdate, resolvedOptions.toolHistory);
+ 				projectedMessages = projectedTools.messages;

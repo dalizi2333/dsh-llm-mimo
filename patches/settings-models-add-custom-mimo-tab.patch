@@ -1,0 +1,85 @@
+--- /tmp/settings-models-pristine.js	2026-09-27 12:02:58.732191127 +0800
++++ "/mnt/Data/Program Files (x86)/MiMo CodeX/HDSL/data/runtimes/0.1.7-rc.2/node_modules/@deepseek-ai/dsh-client-ui-settings-models/lib/client.js"	2026-09-27 11:43:58.679215500 +0800
+@@ -2253,6 +2253,9 @@
+ 											label: t("addCustom"),
+ 											disabled: !customEnabled,
+ 											...customEnabled ? {} : { title: t("addCustomUnavailable") }
++										}, {
++											value: "custom-mimo",
++											label: t("addCustomMimo")
+ 										}],
+ 										onChange: (next) => {
+ 											setAddMode(next);
+@@ -2262,12 +2265,12 @@
+ 										className: ModelsSection_module_css_default["editorHeader"],
+ 										children: (0, react_jsx_runtime.jsx)("span", {
+ 											className: ModelsSection_module_css_default["editorTitle"],
+-											children: t(mode === "catalog" ? "addCatalog" : "addCustom")
+-										})
+-									}), (0, react_jsx_runtime.jsx)("p", {
+-										className: ModelsSection_module_css_default["advancedHint"],
+-										children: t(mode === "catalog" ? "addCatalogHint" : "addCustomHint")
+-									})]
++									children: t(mode === "catalog" ? "addCatalog" : mode === "custom-mimo" ? "addCustomMimo" : "addCustom")
++								})
++							}), (0, react_jsx_runtime.jsx)("p", {
++								className: ModelsSection_module_css_default["advancedHint"],
++								children: t(mode === "catalog" ? "addCatalogHint" : mode === "custom-mimo" ? "addCustomMimoHint" : "addCustomHint")
++							})]
+ 								}),
+ 								mounted("catalog") && draft !== void 0 ? (0, react_jsx_runtime.jsxs)("div", {
+ 									id: `${addId}-catalog-panel`,
+@@ -2343,6 +2346,24 @@
+ 										},
+ 										onBusyChange: setCustomBusy
+ 									})
++								}) : null,
++								mounted("custom-mimo") ? (0, react_jsx_runtime.jsx)("div", {
++									id: `${addId}-custom-mimo-panel`,
++									...bothOffered ? {
++										role: "tabpanel",
++										"aria-labelledby": `${addId}-custom-mimo`
++									} : {},
++									hidden: mode !== "custom-mimo",
++									className: ModelsSection_module_css_default["addPanel"],
++									children: renderSlot("settings.models.custom-api-card", {
++										taken: state.rows.map((row) => row.entry.provider),
++										readOnly: !state.writable,
++										onClose: (changed) => {
++											closeAdd();
++											if (changed) controller.load();
++										},
++										onBusyChange: setCustomBusy
++									}, { entryKey: "llm-mimo-custom" })
+ 								}) : null
+ 							]
+ 						}) : catalogOffered || customOffered ? (0, react_jsx_runtime.jsx)("div", {
+@@ -2864,6 +2885,8 @@
+ 			addCustom: "Custom model API",
+ 			addCatalogHint: "Pick OpenAI, Anthropic, Kimi, or another provider from the built-in catalog and enter its API key.",
+ 			addCustomHint: "Connect a relay, a self-hosted server, or any other OpenAI- or Anthropic-compatible endpoint by its base URL, protocol, and models.",
++			addCustomMimo: "Custom model API (llm-mimo)",
++			addCustomMimoHint: "The custom model API as an llm-mimo card: provider name and id, API address, protocol, key, and a model catalog.",
+ 			addCatalogExhausted: "Every catalog provider is already configured.",
+ 			addCustomUnavailable: "No API protocol is available to declare.",
+ 			provider: "Provider",
+@@ -2980,6 +3003,8 @@
+ 			addCustom: "自定义模型 API",
+ 			addCatalogHint: "从内置目录中选择 OpenAI、Anthropic、Kimi 等提供商，填入其 API 密钥即可使用。",
+ 			addCustomHint: "连接中转站、自部署服务或其他兼容 OpenAI / Anthropic 协议的接口，需填写 API 地址、协议和模型。",
++			addCustomMimo: "自定义模型 API（llm-mimo）",
++			addCustomMimoHint: "自定义模型 API 的 llm-mimo 卡片版：供应商名称/ID、API 地址、协议、密钥与模型目录。",
+ 			addCatalogExhausted: "目录中的提供商都已添加。",
+ 			addCustomUnavailable: "没有可用的 API 协议。",
+ 			provider: "提供商",
+@@ -4069,6 +4094,10 @@
+ 						kind: "keyed",
+ 						scope: "root"
+ 					},
++					"settings.models.custom-api-card": {
++						kind: "keyed",
++						scope: "root"
++					},
+ 					"settings.models.footer": {
+ 						kind: "list",
+ 						scope: "root"
