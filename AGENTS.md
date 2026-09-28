@@ -79,3 +79,27 @@ llmMimo dispatch 接口是**兜底/强制层**（防绕过路径、装配层失�
 - **验证纪律**：dispatch 时改写**不能**看轨迹系统提示词面板（显示装配时持久提示词，
   不是线上改写）——用行为判别（判别式系统提示词：让模型自查工具前缀并按结果作答）。
   轨迹面板只验装配层产物。
+
+## 六、发布与安装（2026-09-28 实测定稿）
+
+**安装器规格**（GUI 插件→添加插件）：包名（registry）/ GitHub 或 git URL / 本地**绝对**
+路径（`file:` 前缀=复制式，裸路径=link: 式）。安装器自动把带 `dsh.bundle` 清单的包装进
+`dsh.profile.bundles`（无需手动登记）；兼容门禁只校验 `@deepseek-ai/dsh*` 的
+peerDependencies 与运行时版本（`workspace:*` 或精确版本）。
+
+**package.json 范式（对照 dsh-llm-deepseek-api-key）**：
+- `peerDependencies`：`@deepseek-ai/dsh*` + cordis——**运行时提供**（勿放 dependencies；
+  registry 上的 dsh-llm 可得版本 ≠ 运行时版本，放 deps 会装错或装不上）。
+- `dependencies`：仅第三方（schemastery/cosmokit/eventsource-parser——均已在
+  npmmirror 验证可得）。
+- `files` 含 `cordis.patch.yml` 与 `patches/`；`license`/`publishConfig`/`exports` 齐备。
+
+**两种安装形态的实测结论（3096/3097 隔离实例）**：
+1. **发布形态**（`file:`/registry/git——pnpm 复制 + 自动解析 dependencies）：安装→启用→
+   挂载全绿。发布到 git/registry 后丢安装器即可装。
+2. **link: 形态**（裸本地路径）：pnpm 不装被链包的依赖——**仓库目录必须先
+   `pnpm install`**（本仓名义 `.npmrc` 已关 auto-install-peers）出 node_modules，
+   否则启用报 "failed to import"（缺 schemastery 等）。开发机克隆后先装依赖再本地装。
+
+**待定项（owner）**：registry 发布时的包名 scope（`@local/` 是实例内约定，注册表发布
+建议换正式 scope）；`repository` 字段待推送远端后补。

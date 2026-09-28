@@ -1,17 +1,12 @@
 {
   "name": "@local/llm-mimo",
+  "description": "MiMo-native LLM adapter (Anthropic Messages dialect) for MiMo CodeX",
   "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "lib/index.js",
-  "description": "MiMo-native LLM adapter (Anthropic Messages dialect) for MiMo CodeX",
-  "dependencies": {
-    "@deepseek-ai/dsh-llm": "link:../../../../../../../runtimes/0.1.7-rc.2/node_modules/@deepseek-ai/dsh-llm",
-    "@deepseek-ai/dsh-credentials": "link:../../../../../../../runtimes/0.1.7-rc.2/node_modules/@deepseek-ai/dsh-credentials",
-    "@deepseek-ai/schemastery": "link:../../../../../../../runtimes/0.1.7-rc.2/node_modules/@deepseek-ai/schemastery",
-    "@deepseek-ai/cosmokit": "link:../../../../../../../runtimes/0.1.7-rc.2/node_modules/@deepseek-ai/cosmokit",
-    "eventsource-parser": "link:../../../../../../../runtimes/0.1.7-rc.2/node_modules/eventsource-parser",
-    "@deepseek-ai/dsh-launch-environment": "link:../../../../../../../runtimes/0.1.7-rc.2/node_modules/@deepseek-ai/dsh-launch-environment"
-  },
   "exports": {
     ".": "./lib/index.js",
     "./client": "./lib/client.js",
@@ -21,8 +16,31 @@
   "files": [
     "lib",
     "cordis.patch.yml",
-    "package.json"
+    "patches",
+    "README.md",
+    "AGENTS.md"
   ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.0.4",
+    "@deepseek-ai/dsh-credentials": "0.1.7-rc.2",
+    "@deepseek-ai/dsh-launch-environment": "0.1.7-rc.2",
+    "@deepseek-ai/dsh-llm": "0.1.7-rc.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "~4.0.4",
+    "@deepseek-ai/cosmokit": "~1.8.5",
+    "@deepseek-ai/dsh-credentials": "0.1.7-rc.2",
+    "@deepseek-ai/dsh-launch-environment": "0.1.7-rc.2",
+    "@deepseek-ai/dsh-llm": "0.1.7-rc.2",
+    "@deepseek-ai/schemastery": "~3.18.4",
+    "eventsource-parser": "~3.1.1"
+  },
+  "dependencies": {
+    "@deepseek-ai/cosmokit": "~1.8.5",
+    "@deepseek-ai/schemastery": "~3.18.4",
+    "eventsource-parser": "~3.1.1"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
