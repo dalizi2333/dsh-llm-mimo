@@ -54,5 +54,10 @@
       ],
       "platform": "web"
     }
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dalizi2333/dsh-llm-mimo.git"
+  },
+  "homepage": "https://github.com/dalizi2333/dsh-llm-mimo#readme"
 }
