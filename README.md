@@ -48,3 +48,7 @@ apiFormat/modelsJson）。详见 [AGENTS.md](AGENTS.md)。
 
 - [AGENTS.md](AGENTS.md) —— 暴露接口契约、配置面、门禁语义、开发与部署纪律
 - [HANDOFF.md](HANDOFF.md) —— 开发交接与实验记录（探针基线、踩坑）
+
+## 许可证
+
+[MIT](LICENSE) © 2026 MiMo CodeX

@@ -1,6 +1,6 @@
 {
   "name": "@mimo-codex/dsh-llm-mimo",
-  "description": "MiMo-native LLM adapter (Anthropic Messages dialect) for MiMo CodeX",
+  "description": "MiMo 原生 DSH 插件：LLM 适配器与自定义供应商引擎，多模态（图片/音频/视频/PDF）真发、模态能力门禁、按模型注入系统提示词与工具描述",
   "version": "0.1.0",
   "publishConfig": {
     "access": "public"
@@ -18,7 +18,8 @@
     "cordis.patch.yml",
     "patches",
     "README.md",
-    "AGENTS.md"
+    "AGENTS.md",
+    "LICENSE"
   ],
   "license": "MIT",
   "peerDependencies": {
