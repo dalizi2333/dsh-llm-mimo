@@ -32,7 +32,7 @@ OpenAI 兼容 / Anthropic Messages 端点（百炼、网关、MiMo chat 面等�
 ## 安装
 
 DSH profile bundle（四件套）：包放入 `profiles/<name>/packages/llm-mimo`，
-`package.json` 加 `"@local/llm-mimo": "link:./packages/llm-mimo"` 依赖与
+`package.json` 加 `"@mimo-codex/dsh-llm-mimo": "link:./packages/llm-mimo"` 依赖与
 `dsh.profile.bundles` 条目（有序、放基础 bundle 之后），`node_modules/@local/` 建链接。
 多模态真发需应用宿主补丁 `patches/dsh-llm-file-video-projection.patch`（dsh-llm 投影层
 按模态勾选保留 file 块）。

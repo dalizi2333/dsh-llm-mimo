@@ -101,5 +101,7 @@ peerDependencies 与运行时版本（`workspace:*` 或精确版本）。
    `pnpm install`**（本仓名义 `.npmrc` 已关 auto-install-peers）出 node_modules，
    否则启用报 "failed to import"（缺 schemastery 等）。开发机克隆后先装依赖再本地装。
 
-**待定项（owner）**：registry 发布时的包名 scope（`@local/` 是实例内约定，注册表发布
-建议换正式 scope）；`repository` 字段待推送远端后补。
+**命名（已定稿 2026-09-28）**：包名 `@mimo-codex/dsh-llm-mimo`——scope `@mimo-codex`
+为 owner npm 账号下的免费组织；`@local/` 此后只用于实例内不发布的草稿包。
+**待定项**：`repository` 字段待推送 GitHub 后补；registry 发布走
+`npm login`（两步验证）+ `npm publish --access public`。

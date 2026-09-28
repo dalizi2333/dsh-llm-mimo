@@ -1,5 +1,5 @@
 {
-  "name": "@local/llm-mimo",
+  "name": "@mimo-codex/dsh-llm-mimo",
   "description": "MiMo-native LLM adapter (Anthropic Messages dialect) for MiMo CodeX",
   "version": "0.1.0",
   "publishConfig": {
