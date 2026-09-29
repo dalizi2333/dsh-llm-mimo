@@ -1,15 +1,20 @@
 #!/usr/bin/env node
 /**
- * llm-mimo 宿主补丁驱动器（多目标：桌面版 / HDSL 运行时 / 任意 node_modules 形态）。
+ * llm-mimo 宿主补丁驱动器 —— 显式作用域版。
+ *
+ * 原则：只处理「你当前所在（或显式指定）的那一个根目录」，绝不猜、绝不全局扫。
  *
  * 用法（由引导脚本以 ELECTRON_RUN_AS_NODE=1 + 桌面版自带 Electron 运行）：
- *   desktop-patch.cjs install  [额外扫描根 ...]   装载（默认含桌面版；额外根里递归找 dsh-llm）
- *   desktop-patch.cjs uninstall [额外扫描根 ...]  卸载
- *   desktop-patch.cjs status   [额外扫描根 ...]  报告所有目标的版本与补丁状态
+ *   cd 到你的根目录，然后:
+ *   desktop-patch.cjs install [根目录]    装载（根目录缺省 = 当前工作目录）
+ *   desktop-patch.cjs uninstall [根目录]  卸载
+ *   desktop-patch.cjs status [根目录]     查看该根的形态与补丁状态
  *
- * 目标识别：
- *   - 桌面版形态: 目录含 app.asar / app（resources）→ asar 解包 + resources\app 遮蔽
- *   - 运行时形态: 递归找 @deepseek-ai/dsh-llm/lib/index.js → 直接替换文件
+ * 根目录识别（二选一，都从根目录内部判断）：
+ *   - 桌面端形态: 根目录（或其 resources 子目录）下有 app.asar / app
+ *                 → asar 解包 + resources\app 遮蔽
+ *   - 运行时形态: 其余情况 → 在根目录内递归找 @deepseek-ai/dsh-llm
+ *                 （典型根: HDSL 数据根、HDSL 数据根下的 runtimes、任意 node_modules 树）
  *   仅替换基线哈希匹配 0.2.0-rc.1 的文件；其他版本报告后跳过，绝不误伤。
  * 制品获取: 本地仓库优先，jsdelivr / raw / GitHub API 兜底。
  */
@@ -18,7 +23,7 @@ process.noAsar = true;
 
 const { createHash } = require("node:crypto");
 const { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, copyFileSync, renameSync, readdirSync, statSync } = require("node:fs");
-const { join, dirname } = require("node:path");
+const { join, dirname, resolve } = require("node:path");
 const { execSync } = require("node:child_process");
 
 const REPO = "dalizi2333/dsh-llm-mimo";
@@ -41,16 +46,14 @@ const APP_EXE_NAME = "DeepSeek Harness.exe";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const sha = (buf) => createHash("sha256").update(buf).digest("hex");
 
-function desktopResources() {
-  const local = process.env.LOCALAPPDATA;
-  const candidates = [];
-  if (local) candidates.push(join(local, "Programs", "DeepSeek Harness", "resources"));
-  candidates.push(join("D:", "Program Files (x86)", "DeepSeek Harness", "resources"));
-  for (const c of candidates) if (existsSync(join(c, "app.asar")) || existsSync(join(c, "app"))) return c;
-  return null;
+/** 根目录形态识别 */
+function identifyRoot(root) {
+  if (existsSync(join(root, "app.asar")) || existsSync(join(root, "app"))) return "desktop-resources";
+  if (existsSync(join(root, "resources", "app.asar")) || existsSync(join(root, "resources", "app"))) return "desktop-install-root";
+  return "runtime";
 }
 
-/** 在 root 下递归找含 @deepseek-ai/dsh-llm/lib/index.js 的 node_modules（限深限数） */
+/** 运行时形态: 在根内递归找含 @deepseek-ai/dsh-llm/lib/index.js 的 node_modules */
 function findRuntimeTargets(root, depth = 0, out = []) {
   if (depth > 6 || out.length >= 32) return out;
   let entries;
@@ -68,20 +71,6 @@ function findRuntimeTargets(root, depth = 0, out = []) {
     findRuntimeTargets(p, depth + 1, out);
   }
   return out;
-}
-
-/** 收集所有目标: [{kind:"desktop", resourcesDir} , {kind:"runtime", nodeModules, label}] */
-function collectTargets(extraRoots) {
-  const targets = [];
-  const res = desktopResources();
-  if (res) targets.push({ kind: "desktop", resourcesDir: res, label: res });
-  for (const root of extraRoots) {
-    if (!existsSync(root)) { console.log("[!] 扫描根不存在，跳过: " + root); continue; }
-    for (const nm of findRuntimeTargets(root)) {
-      targets.push({ kind: "runtime", nodeModules: nm, label: nm });
-    }
-  }
-  return targets;
 }
 
 async function fetchFirst(relPath) {
@@ -120,7 +109,8 @@ function otherPids(self) {
   } catch (_) { return []; }
 }
 async function killApp() {
-  // 本脚本进程自己也是 DeepSeek Harness.exe（Electron RunAsNode），按 PID 排除自身
+  // 本脚本进程自己也是 DeepSeek Harness.exe（Electron RunAsNode），按 PID 排除自身。
+  // 仅桌面端形态需要（要动 app 树）；运行时形态不涉及。
   const self = process.pid;
   try {
     execSync(`powershell -NoProfile -Command "Get-Process 'DeepSeek Harness' -ErrorAction SilentlyContinue | Where-Object Id -ne ${self} | Stop-Process -Force"`, { stdio: "ignore" });
@@ -175,34 +165,51 @@ function moveTree(src, dst) {
   }
 }
 
-async function installDesktop(t, manifest) {
-  const resourcesDir = t.resourcesDir;
-  const asarPath = join(resourcesDir, "app.asar");
-  const appDir = join(resourcesDir, "app");
-  const asarSaved = join(resourcesDir, "app.asar.unpatched");
-  if (existsSync(appDir)) { console.log("[=] 桌面版已打补丁: " + resourcesDir); return; }
-  if (!existsSync(asarPath)) { console.log("[!] 桌面版缺少 app.asar，跳过: " + resourcesDir); return; }
-  console.log("[*] 桌面版: 解包 " + resourcesDir);
+// ---- 桌面端 ----
+function desktopPaths(root) {
+  const resourcesDir = identifyRoot(root) === "desktop-resources" ? root : join(root, "resources");
+  return {
+    resourcesDir,
+    asarPath: join(resourcesDir, "app.asar"),
+    appDir: join(resourcesDir, "app"),
+    asarSaved: join(resourcesDir, "app.asar.unpatched"),
+  };
+}
+
+async function installDesktop(root, manifest) {
+  const { resourcesDir, asarPath, appDir, asarSaved } = desktopPaths(root);
+  if (existsSync(appDir)) { console.log("[=] 桌面端已打补丁: " + resourcesDir); return; }
+  if (!existsSync(asarPath)) { console.log("[!] 桌面端缺少 app.asar，跳过: " + resourcesDir); return; }
+  console.log("[*] 桌面端: 解包 " + resourcesDir);
   const tmp = join(process.env.TEMP ?? resourcesDir, "dsh-host-patch-extract");
   rmSync(tmp, { recursive: true, force: true });
   extractAsar(asarPath, tmp);
   for (const t2 of TARGETS) {
     const target = join(tmp, t2.rel);
-    if (!existsSync(target)) { console.log("[!] 桌面版缺 " + t2.rel + "，版本可能不符，跳过。"); return; }
+    if (!existsSync(target)) { console.log("[!] 桌面端缺 " + t2.rel + "，版本可能不符，跳过。"); return; }
     if (sha(readFileSync(target)) !== manifest[t2.artifact].pristine_sha256) {
-      console.log("[!] 桌面版宿主文件与 0.2.0-rc.1 基线不符，跳过（不误伤）。");
+      console.log("[!] 桌面端宿主文件与 0.2.0-rc.1 基线不符，跳过（不误伤）。");
       return;
     }
     writeFileSync(target, await fetchFirst(ARTIFACTS_DIR + "/" + t2.artifact));
   }
   renameSync(asarPath, asarSaved);
   try { moveTree(tmp, appDir); }
-  catch (e) { renameSync(asarSaved, asarPath); console.error("[X] 桌面版落位失败，已还原: " + e.message); return; }
-  console.log("[OK] 桌面版补丁完成: " + resourcesDir);
+  catch (e) { renameSync(asarSaved, asarPath); console.error("[X] 桌面端落位失败，已还原: " + e.message); return; }
+  console.log("[OK] 桌面端补丁完成: " + resourcesDir);
 }
 
-async function installRuntime(t, manifest) {
-  const nm = t.nodeModules;
+function uninstallDesktop(root) {
+  const { resourcesDir, appDir, asarSaved, asarPath } = desktopPaths(root);
+  if (existsSync(appDir)) {
+    rmTreeRetry(appDir);
+    if (existsSync(asarSaved)) renameSync(asarSaved, asarPath);
+    console.log("[OK] 桌面端补丁已卸载: " + resourcesDir);
+  } else console.log("[=] 桌面端本就未打补丁: " + resourcesDir);
+}
+
+// ---- 运行时 ----
+async function installRuntime(nm, manifest) {
   for (const t2 of RUNTIME_TARGETS) {
     const target = join(nm, t2.rel);
     if (!existsSync(target)) { console.log("[!] 缺 " + t2.rel + "，跳过: " + nm); return; }
@@ -216,39 +223,52 @@ async function installRuntime(t, manifest) {
   for (const t2 of RUNTIME_TARGETS) {
     const target = join(nm, t2.rel);
     const pristine = target + ".pristine";
-    if (!existsSync(pristine)) copyFileSync(target, pristine); // 留档供卸载还原
+    if (!existsSync(pristine)) copyFileSync(target, pristine);
     writeFileSync(target, await fetchFirst(ARTIFACTS_DIR + "/" + t2.artifact));
   }
   console.log("[OK] 运行时补丁完成: " + nm);
 }
 
-function uninstallRuntime(t) {
+function uninstallRuntime(nm) {
   let touched = false;
   for (const t2 of RUNTIME_TARGETS) {
-    const target = join(t.nodeModules, t2.rel);
+    const target = join(nm, t2.rel);
     const pristine = target + ".pristine";
     if (existsSync(pristine)) { copyFileSync(pristine, target); touched = true; }
   }
-  console.log(touched ? "[OK] 运行时已还原: " + t.nodeModules : "[=] 无补丁痕迹: " + t.nodeModules);
+  console.log(touched ? "[OK] 运行时已还原: " + nm : "[=] 无补丁痕迹: " + nm);
 }
 
 // ---- 主流程 ----
 (async () => {
   const mode = process.argv[2] ?? "status";
-  const extraRoots = process.argv.slice(3);
-  const targets = collectTargets(extraRoots);
-  if (targets.length === 0) { console.log("[!] 没有发现任何目标（桌面版 + 额外扫描根）。"); process.exit(1); }
+  const root = resolve(process.argv[3] ?? process.cwd());
+  if (!existsSync(root)) { console.error("[X] 根目录不存在: " + root); process.exit(1); }
+  const kind = identifyRoot(root);
   const manifest = JSON.parse((await fetchFirst(ARTIFACTS_DIR + "/manifest.json")).toString("utf8"));
 
-  if (mode === "status") {
-    console.log("发现 " + targets.length + " 个目标:");
-    for (const t of targets) {
-      if (t.kind === "desktop") {
-        const appDir = join(t.resourcesDir, "app");
-        const state = existsSync(appDir) ? "已打补丁" : existsSync(join(t.resourcesDir, "app.asar")) ? "未打补丁" : "异常";
-        console.log("  [桌面版] " + state + " — " + t.resourcesDir);
-      } else {
-        const idx = join(t.nodeModules, RUNTIME_TARGETS[0].rel);
+  console.log("根目录: " + root);
+  console.log("形态  : " + (kind === "runtime" ? "运行时（递归找 dsh-llm）" : "桌面端"));
+  console.log("模式  : " + mode);
+
+  const isDesktop = kind !== "runtime";
+  if (isDesktop) await killApp();
+
+  if (isDesktop) {
+    if (mode === "install") await installDesktop(root, manifest);
+    else if (mode === "uninstall") uninstallDesktop(root);
+    else {
+      const { appDir, asarPath } = desktopPaths(root);
+      console.log("状态  : " + (existsSync(appDir) ? "已打补丁" : existsSync(asarPath) ? "未打补丁" : "异常"));
+    }
+  } else {
+    const nodes = findRuntimeTargets(root);
+    if (nodes.length === 0) { console.log("[!] 根目录内没有找到 dsh-llm 运行时（node_modules/@deepseek-ai/dsh-llm）。"); return; }
+    for (const nm of nodes) {
+      if (mode === "install") await installRuntime(nm, manifest);
+      else if (mode === "uninstall") uninstallRuntime(nm);
+      else {
+        const idx = join(nm, RUNTIME_TARGETS[0].rel);
         let state = "缺 dsh-llm";
         if (existsSync(idx)) {
           const h = sha(readFileSync(idx));
@@ -256,30 +276,10 @@ function uninstallRuntime(t) {
             : h === manifest["dsh-llm__lib__index.js"].pristine_sha256 ? "未打补丁 (0.2.0-rc.1 可适配)"
             : "其他版本（本补丁不适配）";
         }
-        console.log("  [运行时] " + state + " — " + t.nodeModules);
+        console.log("  [运行时] " + state + " — " + nm);
       }
     }
-    return;
-  }
-
-  await killApp();
-
-  for (const t of targets) {
-    if (t.kind === "desktop") {
-      if (mode === "install") await installDesktop(t, manifest);
-      else {
-        const appDir = join(t.resourcesDir, "app");
-        const asarSaved = join(t.resourcesDir, "app.asar.unpatched");
-        if (existsSync(appDir)) {
-          rmTreeRetry(appDir);
-          if (existsSync(asarSaved)) renameSync(asarSaved, join(t.resourcesDir, "app.asar"));
-          console.log("[OK] 桌面版补丁已卸载: " + t.resourcesDir);
-        } else console.log("[=] 桌面版本就未打补丁: " + t.resourcesDir);
-      }
-    } else if (t.kind === "runtime") {
-      if (mode === "install") await installRuntime(t, manifest);
-      else uninstallRuntime(t);
-    }
+    if (mode !== "status") console.log("提示: 运行中的实例需重启后才会加载新宿主代码。");
   }
 })().catch((e) => {
   console.error("[X] " + (e?.message ?? e) + " | code=" + (e?.code ?? "-"));
