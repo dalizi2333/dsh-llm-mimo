@@ -96,6 +96,18 @@ async function fetchFirst(relPath) {
       errors.push(url.split("/")[2] + ": " + e.message);
     }
   }
+  // 权威兜底: GitHub contents API（无 CDN 缓存，推送即可拉到）
+  try {
+    const api = `https://api.github.com/repos/${REPO}/contents/patches/${relPath}?ref=${BRANCH}`;
+    const res = await fetch(api, { headers: { "User-Agent": "llm-mimo-patch", "Accept": "application/vnd.github+json" } });
+    if (res.ok) {
+      const j = await res.json();
+      return Buffer.from(j.content, "base64");
+    }
+    errors.push("api.github.com: HTTP " + res.status);
+  } catch (e) {
+    errors.push("api.github.com: " + e.message);
+  }
   throw new Error("所有源都拉取失败:\n  " + errors.join("\n  "));
 }
 
