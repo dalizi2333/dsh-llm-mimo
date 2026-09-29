@@ -39,7 +39,8 @@ foreach ($url in $sources) {
 if (-not $downloaded) { Write-Error "所有下载源都失败了（检查网络/代理后重试）" }
 
 $env:ELECTRON_RUN_AS_NODE = "1"
-& $exe --expose-internals $tmp $Mode
+$roots = if ($env:DSH_PATCH_ROOTS) { $env:DSH_PATCH_ROOTS.Split(";") | Where-Object { $_ } } else { @() }
+& $exe --expose-internals $tmp $Mode @roots
 $code = $LASTEXITCODE
 Remove-Item Env:\ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
 if ($code -ne 0) { exit $code }

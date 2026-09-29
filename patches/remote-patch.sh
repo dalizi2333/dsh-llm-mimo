@@ -3,7 +3,7 @@
 #  llm-mimo 桌面版宿主补丁 - 远程一键引导 (bash，适用 Git Bash)
 #
 #  装载补丁:
-#    curl -fsSL https://cdn.jsdelivr.net/gh/dalizi2333/dsh-llm-mimo@main/patches/remote-patch.sh | bash
+#    附加扫描根（HDSL 运行时等）: 在模式后追加目录参数，可多个
 #  卸载补丁:
 #    curl -fsSL https://cdn.jsdelivr.net/gh/dalizi2333/dsh-llm-mimo@main/patches/remote-patch.sh | bash -s -- uninstall
 #  查看状态:
@@ -36,4 +36,4 @@ done
 [ -n "$ok" ] || { echo "[X] 所有下载源都失败（检查网络/代理后重试）" >&2; exit 1; }
 echo "[*] 驱动器已下载: $ok"
 
-ELECTRON_RUN_AS_NODE=1 "$EXE_POSIX" --expose-internals "$(cygpath -w "$TMP")" "$MODE"
+ELECTRON_RUN_AS_NODE=1 "$EXE_POSIX" --expose-internals "$(cygpath -w "$TMP")" "$MODE" "${@:2}"
