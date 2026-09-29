@@ -31,11 +31,59 @@ OpenAI 兼容 / Anthropic Messages 端点（百炼、网关、MiMo chat 面等�
 
 ## 安装
 
-DSH profile bundle（四件套）：包放入 `profiles/<name>/packages/llm-mimo`，
-`package.json` 加 `"@mimo-codex/dsh-llm-mimo": "link:./packages/llm-mimo"` 依赖与
-`dsh.profile.bundles` 条目（有序、放基础 bundle 之后），`node_modules/@local/` 建链接。
-多模态真发需应用宿主补丁 `patches/dsh-llm-file-video-projection.patch`（dsh-llm 投影层
-按模态勾选保留 file 块）。
+### 一、装插件（GUI，dsh 0.2.0-rc.1+）
+
+桌面版：**插件 → 添加插件** → 粘贴本仓库本地路径（或 GitHub 地址 / npm 包名）→ 安装 →
+立即启用 → 彻底重启。peerDependencies 已声明 `0.1.7-rc.2 || 0.2.0-rc.1`，安装器兼容
+门禁直接放行，无需任何命令行。
+
+### 二、宿主补丁（多模态真发 + 设置页第三页签）
+
+适配 **dsh 0.2.0-rc.1**。补丁替换两个宿主文件（dsh-llm 投影层按模态勾选保留
+image/audio/video/PDF file 块；设置页模型添加对话框增加「自定义模型 API (llm-mimo)」
+页签）。脚本**只处理你所在的根目录**，绝不全局扫描；哈希校验版本，不符即拒绝，可反复
+执行，卸载完全可逆。
+
+**桌面版**（cd 到安装根，或其 `resources` 子目录）：
+
+```powershell
+cd "$env:LOCALAPPDATA\Programs\DeepSeek Harness"
+irm https://raw.githubusercontent.com/dalizi2333/dsh-llm-mimo/main/patches/remote-patch.ps1 | iex
+```
+
+**HDSL / 任意运行时形态**（cd 到数据根、数据根下 `runtimes`、或任意含
+`node_modules/@deepseek-ai/dsh-llm` 的目录）：
+
+```bash
+cd /d/某处/HDSL数据目录/runtimes
+curl -fsSL https://raw.githubusercontent.com/dalizi2333/dsh-llm-mimo/main/patches/remote-patch.sh | bash -s -- install
+```
+
+卸载 / 状态：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dalizi2333/dsh-llm-mimo/main/patches/remote-patch.sh | bash -s -- uninstall
+curl -fsSL https://raw.githubusercontent.com/dalizi2333/dsh-llm-mimo/main/patches/remote-patch.sh | bash -s -- status
+```
+
+（PowerShell 卸载/状态：`$env:DSH_PATCH_MODE="uninstall"` 或 `"status"` 后再 `irm | iex`。
+国内网络 raw 不通时，把两个域名的 `raw.githubusercontent.com/dalizi2333/dsh-llm-mimo/main`
+换成 `cdn.jsdelivr.net/gh/dalizi2333/dsh-llm-mimo@main` 即可——推送后 jsDelivr 缓存有
+分钟级延迟。）
+
+离线场景可双击 `patches/install-desktop-host-patch.cmd`（桌面版专用，同一逻辑）。
+注意：桌面版升级后宿主被覆盖，重跑一次装载即可；卸载 = 删 `resources\app` 并把
+`app.asar.unpatched` 改名回 `app.asar`。
+
+### 三、手动四件套（开发者，dsh 0.1.x / 自定义 profile）
+
+包放入 `profiles/<name>/packages/llm-mimo`，`package.json` 加
+`"@mimo-codex/dsh-llm-mimo": "link:./packages/llm-mimo"` 依赖与 `dsh.profile.bundles`
+条目（有序、放基础 bundle 之后），`node_modules/` 建链接。宿主补丁可直接重放：
+
+```bash
+python patches/apply_host_patches.py <dsh运行时的node_modules目录>
+```
 
 ## 配置
 
