@@ -21,7 +21,7 @@ $exe = Join-Path $resources "..\DeepSeek Harness.exe"
 if (-not (Test-Path $exe)) { Write-Error "找不到桌面版: $exe （如装在别处请手动改造本脚本）" }
 
 $sources = @(
-  "https://cdn.jsdelivr.net/gh/dalizi2333/dsh-llm-mimo@desktop-patch-0.2.0-rc.1/patches/desktop-patch.cjs",
+  "https://cdn.jsdelivr.net/gh/dalizi2333/dsh-llm-mimo@desktop-patch-v1.1/patches/desktop-patch.cjs",
   "https://raw.githubusercontent.com/dalizi2333/dsh-llm-mimo/main/patches/desktop-patch.cjs"
 )
 $tmp = Join-Path $env:TEMP "dsh-desktop-patch.cjs"
