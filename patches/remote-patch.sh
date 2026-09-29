@@ -13,6 +13,7 @@
 #  (ELECTRON_RUN_AS_NODE) 执行 —— 目标机器不需要装任何东西。
 # ============================================================
 set -euo pipefail
+command -v chcp.com >/dev/null 2>&1 && chcp.com 65001 >/dev/null 2>&1 || true
 MODE="${1:-${DSH_PATCH_MODE:-install}}"
 case "$MODE" in install|uninstall|status) ;; *) echo "用法: $0 install|uninstall|status" >&2; exit 2;; esac
 
@@ -27,7 +28,7 @@ EXE_POSIX=$(cygpath -u "$EXE" 2>/dev/null || echo "$EXE")
 TMP="${TMPDIR:-/tmp}/dsh-desktop-patch.cjs"
 ok=""
 for url in \
-  "https://cdn.jsdelivr.net/gh/dalizi2333/dsh-llm-mimo@main/patches/desktop-patch.cjs" \
+  "https://cdn.jsdelivr.net/gh/dalizi2333/dsh-llm-mimo@desktop-patch-0.2.0-rc.1/patches/desktop-patch.cjs" \
   "https://raw.githubusercontent.com/dalizi2333/dsh-llm-mimo/main/patches/desktop-patch.cjs"; do
   if curl -fsSL --max-time 30 -o "$TMP" "$url"; then ok="$url"; break; fi
   echo "    源失败: $url"
