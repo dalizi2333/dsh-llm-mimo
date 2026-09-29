@@ -28,8 +28,8 @@ EXE_POSIX=$(cygpath -u "$EXE" 2>/dev/null || echo "$EXE")
 TMP="${TMPDIR:-/tmp}/dsh-desktop-patch.cjs"
 ok=""
 for url in \
-  "https://cdn.jsdelivr.net/gh/dalizi2333/dsh-llm-mimo@main/patches/desktop-patch.cjs" \
-  "https://raw.githubusercontent.com/dalizi2333/dsh-llm-mimo/main/patches/desktop-patch.cjs"; do
+  "https://raw.githubusercontent.com/dalizi2333/dsh-llm-mimo/main/patches/desktop-patch.cjs" \
+  "https://cdn.jsdelivr.net/gh/dalizi2333/dsh-llm-mimo@main/patches/desktop-patch.cjs"; do
   if curl -fsSL --max-time 30 -o "$TMP" "$url"; then ok="$url"; break; fi
   echo "    源失败: $url"
 done
