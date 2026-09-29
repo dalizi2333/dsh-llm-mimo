@@ -1,12 +1,17 @@
 {
   "name": "@mimo-codex/dsh-llm-mimo",
   "description": "MiMo 原生 DSH 插件：LLM 适配器与自定义供应商引擎，多模态（图片/音频/视频/PDF）真发、模态能力门禁、按模型注入系统提示词与工具描述",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publishConfig": {
     "access": "public"
   },
   "type": "module",
   "main": "lib/index.js",
+  "scripts": {
+    "verify:install": "node scripts/verify-install.mjs",
+    "test": "node scripts/verify-install.mjs",
+    "ci": "node scripts/ci.mjs"
+  },
   "exports": {
     ".": "./lib/index.js",
     "./client": "./lib/client.js",
@@ -24,16 +29,16 @@
   "license": "MIT",
   "peerDependencies": {
     "@deepseek-ai/cordis": "~4.0.4",
-    "@deepseek-ai/dsh-credentials": "0.1.7-rc.2 || 0.2.0-rc.1",
-    "@deepseek-ai/dsh-launch-environment": "0.1.7-rc.2 || 0.2.0-rc.1",
-    "@deepseek-ai/dsh-llm": "0.1.7-rc.2 || 0.2.0-rc.1"
+    "@deepseek-ai/dsh-credentials": "0.1.7-rc.2 || 0.2.0-rc.1 || 0.2.0-rc.2",
+    "@deepseek-ai/dsh-launch-environment": "0.1.7-rc.2 || 0.2.0-rc.1 || 0.2.0-rc.2",
+    "@deepseek-ai/dsh-llm": "0.1.7-rc.2 || 0.2.0-rc.1 || 0.2.0-rc.2"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "~4.0.4",
     "@deepseek-ai/cosmokit": "~1.8.5",
-    "@deepseek-ai/dsh-credentials": "0.1.7-rc.2",
-    "@deepseek-ai/dsh-launch-environment": "0.1.7-rc.2",
-    "@deepseek-ai/dsh-llm": "0.1.7-rc.2",
+    "@deepseek-ai/dsh-credentials": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-launch-environment": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
     "@deepseek-ai/schemastery": "~3.18.4",
     "eventsource-parser": "~3.1.1"
   },

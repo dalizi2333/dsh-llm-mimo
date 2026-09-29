@@ -1,0 +1,39 @@
+# CI —— 第一道门 = 可安装性 + 宿主补丁 replay（decisions D8）。
+# 实质步骤与本地 `npm run ci`（scripts/ci.mjs）同一份脚本：本地全绿才 push（pre-push 钩子强制）。
+name: CI
+
+on:
+  push:
+    paths-ignore:
+      - "README.md"
+      - "AGENTS.md"
+      - "LICENSE"
+      - "log/**"
+  pull_request:
+    paths-ignore:
+      - "README.md"
+      - "AGENTS.md"
+      - "LICENSE"
+      - "log/**"
+
+jobs:
+  installability:
+    name: 可安装性 + 补丁 replay
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # dsh plugin add 内部调用 pnpm；钉 11 系（与本地彩排同系）
+      - name: 安装 pnpm
+        run: npm install -g pnpm@11
+
+      - name: 安装基线 CLI（钉死 0.2.0-rc.2 = peerDeps 最新运行时）
+        run: npm install -g @deepseek-ai/dsh@0.2.0-rc.2
+
+      - name: 全链可安装性 + 补丁 replay 门（与本地 npm run ci 同一脚本）
+        run: npm run ci
