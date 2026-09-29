@@ -95,7 +95,7 @@ apiFormat/modelsJson）。详见 [AGENTS.md](AGENTS.md)。
 ## 文档
 
 - [AGENTS.md](AGENTS.md) —— 暴露接口契约、配置面、门禁语义、开发与部署纪律
-- [HANDOFF.md](HANDOFF.md) —— 开发交接与实验记录（探针基线、踩坑）
+- [log/llm-mimo/](log/llm-mimo/README.md) —— 开发计划归档（`handover.md` 交接入口、进度、决策、探针基线与踩坑）
 
 ## 许可证
 

@@ -1,6 +1,6 @@
 # AGENTS.md — llm-mimo 暴露接口与工程纪律
 
-给 AI 代理/消费方看的接口契约。修改本插件前先读本文 + HANDOFF.md 的实验结论。
+给 AI 代理/消费方看的接口契约。修改本插件前先读本文 + `log/llm-mimo/`（`handover.md` 为入口，含实验结论与踩坑）。
 
 ## 一、llmMimo 服务（提示词源接口）
 
@@ -44,8 +44,10 @@
   （装配瀑布返回值权威）。
 
 llmMimo dispatch 接口是**兜底/强制层**（防绕过路径、装配层失灵时的最后一道）。
-装配层按模型解析的模型源必须用 pending route（`model/selection` 后的值），勿用
-`agent.options` 创建快照（R5 教训：会一回合延迟）。
+装配层按模型解析的模型源必须用 pending route——**正解 = `assembly.variables.model`**
+（框架 installModelSelection 注入装配输入，零滞后）；`session.requestHeader()` 在
+**首装配时恒 null**（dispatch 期才落盘，真机插桩证伪），仅可作 dispatch 期后备；
+勿用 `agent.options` 创建快照（R5 教训：会一回合延迟）。
 
 ## 三、配置面（`cordis.patch.yml` 的 llm-mimo 行 config）
 
