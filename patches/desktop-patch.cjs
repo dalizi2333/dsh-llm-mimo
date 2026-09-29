@@ -28,9 +28,10 @@ const { execSync } = require("node:child_process");
 
 const REPO = "dalizi2333/dsh-llm-mimo";
 const BRANCH = "main";
+// raw 优先（权威、无 CDN 缓存延迟）；jsdelivr 作为不可达时的回退
 const REMOTE_SOURCES = [
-  (p) => `https://cdn.jsdelivr.net/gh/${REPO}@main/patches/${p}`,
   (p) => `https://raw.githubusercontent.com/${REPO}/${BRANCH}/patches/${p}`,
+  (p) => `https://cdn.jsdelivr.net/gh/${REPO}@main/patches/${p}`,
 ];
 const ARTIFACTS_DIR = "desktop-0.2.0-rc.1";
 const TARGETS = [
