@@ -1,7 +1,7 @@
 {
   "name": "@mimo-codex/dsh-llm-mimo",
   "description": "MiMo 原生 DSH 插件：LLM 适配器与自定义供应商引擎，多模态（图片/音频/视频/PDF）真发、模态能力门禁、按模型注入系统提示词与工具描述",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "publishConfig": {
     "access": "public"
   },
