@@ -1,0 +1,43 @@
+// SPDX-License-Identifier: CC-BY-4.0
+<!-- Copyright (c) 2026 MiMo CodeX / dalizi233 -->
+
+# D-1 验证报告：a10e49d 修复有效（2026-10-04，deepseek-lab 会话执行）
+
+> 验证方法 = `defect-d1-handover.md` §5 配方 A（fake-ctx 单元夹具，零视觉），
+> 夹具脚本 `/tmp/d1-verify.mjs`（临时产物，未入库）。**结论先行：修复成立，
+> 无需再请外部会话研究；遗留仅剩部署面（副本同步/重启/版本/push，归 owner）。**
+
+## 一、前后对照（同一夹具，五用例）
+
+运行：`node /tmp/d1-verify.mjs <repo>`；pre-fix 用 `git worktree add /tmp/d1-prefix 9cbe2f9`
+（+node_modules 软链）。
+
+| 用例 | 9cbe2f9（pre-fix） | a10e49d（fix） |
+| --- | --- | --- |
+| C1 双跑篡改（pass1 替换 / pass2 输入=替换文 no-op） | **FAIL——完整复现线上缺陷**：2 条记录、徽章相反、文本同为 `REPLACED-PERSONA-TEXT`（时间戳相差 1ms，与 M1 轨迹里的同秒孪生同构） | **PASS**：折叠为 1 条 `tampered=true`、文本=替换后（替换真相保留） |
+| C2 无源同文双跑 | PASS（1 条 false） | PASS |
+| C3 两次文本不同的真实 dispatch | PASS（2 条，无误折） | PASS |
+| C4 环形缓冲 cap | PASS（10 发留 8 新） | PASS |
+| C5 折叠边界 | 2 条（缺陷形态） | 1 条——**设计使然的已知边界**：`model+system` 键无法区分「真重放 dispatch」与「no-op 第二遍」；生产中相邻同文本的合法 dispatch（工具循环/重试）本就应折叠，接受 |
+
+原始输出逐条见两仓提交时的验证日志（夹具打印每用例 JSON）。
+
+## 二、判定
+
+1. **修复语义成立**：a10e49d 的去重键（model+system）让第二遍 no-op 记录折叠进首条
+   （唯一携带替换真相的记录），D-1 的「原始徽章载篡改后文本」在机制层面消除；
+   且不误折真实不同 dispatch（C3）、不破坏 cap（C4）。
+2. **修复作者的根因假设获旁证**：夹具按其假设（「promptView 双跑、第二遍输入已是替换文」）
+   构造，pre-fix 精确复现线上孪生形态——假设与 M1 现场证据自洽。
+3. **未做（也不阻塞收口）**：双跑的真实触发点定位（配方 B，H1 retry / H2 瀑布双应用）——
+   仅当未来要做 L2 根因级修复时才需要；当前 L1 已验证，从成本看不必追。
+4. **附带观察**：C5 边界意味着极端场景（相邻、同 model、同文本、真两次独立 dispatch）
+   会少记一条——审计面可接受，登记为已知边界即可。
+
+## 三、遗留（归 owner，均不阻塞「修复有效」结论）
+
+1. **实例副本未同步**：mimo-codex-020rc2 两副本（core-web/core-headless）仍是 v0.4.0
+   旧码——同步 `lib/index.js` + 按重启序列（杀 HDSL→改→owner 重启）后面板才实际生效。
+2. **版本与发布**：a10e49d + 文档三连（9cbe2f9/dffd1aa/本报告）未推；是否出 v0.4.1
+   由 owner 定；push 只能 owner 手动。
+3. GLM-5.3 研究会话**取消**（owner 前提条件「万一他真修成了」已满足）。
