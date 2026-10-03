@@ -90,7 +90,8 @@ python patches/apply_host_patches.py <dsh运行时的node_modules目录>
 `cordis.patch.yml` 的 `llm-mimo` 行 config：`apiKeyEnv`/`baseURL`/`apiFormat`/
 `modelsJson`（模型目录：id/name/contextWindow/maxTokens/inputModalities/videoFps/
 videoMediaResolution）/`customProviders`（dict：displayName/apiKeyEnv/baseURL/
-apiFormat/modelsJson）。详见 [AGENTS.md](AGENTS.md)。
+apiFormat/modelsJson）/`dispatchViewJson`（volatile 遥测：最近 dispatch 的实际
+system 视图环形缓冲，轨迹面板注入消费，勿手写）。详见 [AGENTS.md](AGENTS.md)。
 
 ## 文档
 

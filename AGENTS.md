@@ -57,6 +57,7 @@ llmMimo dispatch 接口是**兜底/强制层**（防绕过路径、装配层失�
 | `baseURL` / `apiFormat` | 主路由连接；`apiFormat`: `anthropic` \| `chat` \| `responses`（后者存根） |
 | `modelsJson` | 模型目录 JSON 字符串，条目：`id/name/contextWindow/maxTokens/inputModalities/videoFps/videoMediaResolution` |
 | `customProviders` | dict（volatile）：`displayName/apiKeyEnv/baseURL/apiFormat/baseURLsJson/modelsJson`，route 即路由键 |
+| `dispatchViewJson` | volatile 遥测（勿手写）：每次 dispatch 的实际 system 视图记录环形缓冲（`[{time, provider, model, tampered, system}]`，新者在前，cap 8，按 model+tampered+system 去重）。无注册源也记录（tampered=false）。轨迹面板注入（client）读取；实例重启即清 |
 
 `inputModalities` 词汇：`text | image | audio | video | pdf`。**勾选=能力声明**：
 未勾的模态发送即拒（错误文案指明缺哪个、给两条出路）；anthropic 面勾 audio/video/pdf
