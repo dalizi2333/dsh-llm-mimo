@@ -97,6 +97,7 @@ system 视图环形缓冲，轨迹面板注入消费，勿手写）。详见 [AG
 
 - [AGENTS.md](AGENTS.md) —— 暴露接口契约、配置面、门禁语义、开发与部署纪律
 - [log/llm-mimo/](log/llm-mimo/README.md) —— 开发计划归档（`handover.md` 交接入口、进度、决策、探针基线与踩坑）
+- [log/llm-mimo/rp-efficiency-experiment-2026-10.md](log/llm-mimo/rp-efficiency-experiment-2026-10.md) —— 实验记录：RP 人设强化 deepseek-flash Agent 的效率效应（质量不变、token 1/4~1/11；含可复用人设模板与注入可达面大坑）
 
 ## 许可证
 
